@@ -66,4 +66,28 @@ function Util.getCmdDefs(group)
     end
 end
 
+function Util.runBanCommand(group)
+    return function(context, target, reason, duration)
+        duration = duration:lower()
+        local Players = game:GetService("Players")
+        if not Players.BanAsync then return "BanAsync not available" end
+        if not Util[group][duration] then
+            return "Invalid duration: " .. Util.getStr(group)
+        end
+
+        Players:BanAsync(Util.getBanCmd(
+            context.Executor.Name,
+            target,
+            Util[group][duration],
+            reason
+        ))
+
+        if target and target:IsDescendantOf(Players) then
+            target:Kick(Util.getKickMsg(reason, duration))
+        end
+
+        return Util.getFinalMsg(target, reason, duration)
+    end
+end
+
 return Util
