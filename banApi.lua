@@ -4,8 +4,7 @@ local Util = {}
 
 local banDurations = {
     Hero = {},
-    Admin = {},
-    getStr = function(group) end
+    Admin = {}
 }
 
 banDurations.Hero = (function(hour)
@@ -26,21 +25,20 @@ banDurations.Admin = (function(Hero, month)
     return t
 end)(banDurations.Hero, 30 * 24 * 3600)
 
-banDurations.getStr = function(group)
-    local t = {}
+local durationStr = function(group)
     if not banDurations[group] then
         error("Invalid group: " .. tostring(group))
-    elseif type(banDurations[group]) ~= "table" then
-        for k in pairs(banDurations[group]) do
-            table.insert(t, k)
-        end
+    end
+    local t = {}
+    for k in pairs(banDurations[group]) do
+        table.insert(t, k)
     end
     table.sort(t)
     return "Duration must be one of: " .. table.concat(t, ", ")
 end
 
 function Util.getCmdDefs(group)
-    if not Util[group] then
+    if not banDurations[group] then
         error("Invalid group: " .. tostring(group))
     else
         return {
@@ -51,14 +49,14 @@ function Util.getCmdDefs(group)
             Args = {
                 { Type = "player", Name = "target",   Description = "Player to ban" },
                 { Type = "string", Name = "reason",   Description = "Reason for ban" },
-                { Type = "string", Name = "duration", Description = banDurations.getStr(group) }
+                { Type = "string", Name = "duration", Description = durationStr(group) }
             },
-            Run = function(context, target, reason, duration, group)
+            Run = function(context, target, reason, duration)
                 duration = duration:lower()
                 local Players = game:GetService("Players")
                 if not Players.BanAsync then return "BanAsync not available" end
                 if not banDurations[group][duration] then
-                    return "Invalid duration: " .. banDurations.getStr(group)
+                    return "Invalid duration: " .. durationStr(group)
                 else
                     Players:BanAsync({
                         UserIds = { target.UserId },
