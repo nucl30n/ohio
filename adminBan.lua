@@ -1,6 +1,10 @@
 -- Roblox BanAPI Cmdr def for "Admin" group
 -- ServerScriptService/CmdrCommands/adminBan.lua
 
+local BanUtils = require(game.ServerScriptService.Modules.BanUtils)
+local group = "Admin"
+local cmdDefs = BanUtils.getCmdDefs(group)
+
 cmdDefs.Run = function(context, target, reason, duration)
     duration = duration:lower()
     local Players = game:GetService("Players")
@@ -17,3 +21,5 @@ cmdDefs.Run = function(context, target, reason, duration)
 
     return BanUtils.getFinalMsg(target, reason, duration)
 end
+
+return cmdDefs
