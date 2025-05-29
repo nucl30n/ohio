@@ -1,4 +1,4 @@
--- ServerScriptService/Modules/BanUtils.lua
+-- ServerScriptService/Modules/banApi.lua
 
 local Util = {}
 
