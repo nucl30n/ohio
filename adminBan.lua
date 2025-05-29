@@ -1,3 +1,4 @@
+-- Roblox BanAPI Cmdr def for "Admin" group
 -- ServerScriptService/CmdrCommands/adminBan.lua
 
 cmdDefs.Run = function(context, target, reason, duration)
