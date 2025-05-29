@@ -1,4 +1,3 @@
--- idk where it goes, probably smth like: 
 -- ServerScriptService/Modules/BanUtils.lua
 
 local Util = {}
