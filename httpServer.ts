@@ -5,35 +5,38 @@ const banTargets = new Set<string>();
 function respond(body: unknown, status = 200): Response {
     return new Response(JSON.stringify(body), {
         status,
-        headers: {
-            "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
     });
 }
 
 serve(async (req) => {
+    const url = new URL(req.url, "http://x");
     switch (true) {
-        case (req.method == "GET" && req.url == "/ohio/getban"):
+        case (req.method === "GET" && url.pathname === "/ohio/getban"):
+            // Only userIds in the response (no roles)
             return respond({ targets: Array.from(banTargets) });
 
-        case (req.method == "POST" && req.url == "/ohio/confirmban"):
+        case (req.method === "POST" && url.pathname === "/ohio/confirmban"):
             return req.json()
-                .then((data) => typeof data === "object"
-                    && data.username
-                    && banTargets.has(data.username)
-                    && banTargets.delete(data.username))
-                .then(() => respond({ success: true }))
+                .then((data) => {
+                    if (typeof data === "object" && data.userId && banTargets.has(data.userId)) {
+                        banTargets.delete(data.userId);
+                        return respond({ success: true });
+                    }
+                    return respond({ success: false }, 400);
+                })
                 .catch(() => respond({ success: false }, 500));
 
-        case (req.method == "POST" && req.url == "/ohio/ban"):
+        case (req.method === "POST" && url.pathname === "/ohio/ban"):
             return req.json()
-                .then((data) => typeof data === "object"
-                    && data.username
-                    && banTargets.add(data.username))
-                .then(() => respond({ success: true }))
+                .then((data) => {
+                    if (typeof data === "object" && data.userId) {
+                        banTargets.add(data.userId); 
+                        return respond({ success: true });
+                    }
+                    return respond({ success: false }, 400);
+                })
                 .catch(() => respond({ success: false }, 500));
 
         default:
-            return respond({ error: "Not Found" }, 404);
-    }
-});
+            return respond({ error:
