@@ -15,6 +15,9 @@ one-liner files could be created for each role in:
 
 ### Http Bans
 A call to `banApi.polpollHttpServer()` can be added to the `ServerScriptService` to periodically check for bans from the HTTP server.
+```lua
+require(game.ServerScriptService.Modules.banApi).pollHttpServer()
+```
 
 ### Http Server
-The example http server in `HttpServer.ts` provides 
+The example http server in `HttpServer.ts` provides a basic implementation for handling ban requests from a Discord bot or web UI.
