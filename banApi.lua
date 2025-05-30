@@ -1,11 +1,10 @@
 -- File: ServerScriptService/Modules/banApi.lua
--- Roblox globals: game, typeof, Enum, task, pcall, error
--- Luau std lib: table.find
--- `BanApi.pollHttpServer` is meant to be invoked on the server in `ServerScriptService`
--- `BanApi.getCmdrDef` is meant to be invoked in `ServerScriptService/CmdrCommands/`
 
 local HttpService = game:GetService("HttpService")
 local Players = game:GetService("Players")
+
+-- Roblox globals: game, typeof, Enum, task, pcall, error
+-- Luau std lib: table.find
 
 local Groups = {
     Defs = {
@@ -82,7 +81,7 @@ local function durationStr(group)
     return "Duration must be one of: " .. table.concat(getBanDurations(group), ", ")
 end
 
-function BanApi.banUser(group, executor, target, reason, duration)
+local function banUser(group, executor, target, reason, duration)
     duration = duration:lower()
     local def = BanDefs[duration]
     if not Players.BanAsync then
@@ -121,7 +120,51 @@ function BanApi.banUser(group, executor, target, reason, duration)
     end
 end
 
+local function getBanTargets()
+    return HttpService:JSONDecode(HttpService:GetAsync(HttpEndpoints.banTargets))
+end
+
+local function confirmHttpBan(userId)
+    local payload = HttpService:JSONEncode({ userId = userId })
+    HttpService:PostAsync(
+        HttpEndpoints.confirmBan,
+        payload,
+        Enum.HttpContentType.ApplicationJson
+    )
+end
+
+local function executeHttpBan(group, ban)
+    local player = Players:GetPlayerByUserId(ban.userId)
+    banUser(
+        group,
+        "HttpServer",
+        player or ban.userId,
+        ban.reason or "",
+        (ban.duration or ""):lower()
+    )
+end
+
+local function processHttpBans()
+    local success, result = pcall(getBanTargets)
+    if success and type(result.bans) == "table" then
+        for _, ban in ipairs(result.bans) do
+            local group = Groups.Validate(ban.httpKey)
+            if group and ban.userId and ban.duration then
+                local ok, err = pcall(function()
+                    executeHttpBan(group, ban)
+                end)
+                if ok then
+                    pcall(function()
+                        confirmHttpBan(ban.userId)
+                    end)
+                end
+            end
+        end
+    end
+end
+
 function BanApi.getCmdrDef(group)
+    -- this is meant to be invoked in `ServerScriptService/CmdrCommands/`
     if not Groups.Defs[group] then
         error("Invalid group: " .. tostring(group))
     else
@@ -143,50 +186,8 @@ function BanApi.getCmdrDef(group)
     end
 end
 
-function BanApi.getBanTargets()
-    return HttpService:JSONDecode(HttpService:GetAsync(HttpEndpoints.banTargets))
-end
-
-local function confirmHttpBan(userId)
-    local payload = HttpService:JSONEncode({ userId = userId })
-    HttpService:PostAsync(
-        HttpEndpoints.confirmBan,
-        payload,
-        Enum.HttpContentType.ApplicationJson
-    )
-end
-
-local function executeHttpBan(group, ban)
-    local player = Players:GetPlayerByUserId(ban.userId)
-    BanApi.banUser(
-        group,
-        "HttpServer",
-        player or ban.userId,
-        ban.reason or "",
-        (ban.duration or ""):lower()
-    )
-end
-
-local function processHttpBans()
-    local success, result = pcall(BanApi.getBanTargets)
-    if success and type(result.bans) == "table" then
-        for _, ban in ipairs(result.bans) do
-            local group = Groups.Validate(ban.httpKey)
-            if group and ban.userId and ban.duration then
-                local ok, err = pcall(function()
-                    executeHttpBan(group, ban)
-                end)
-                if ok then
-                    pcall(function()
-                        confirmHttpBan(ban.userId)
-                    end)
-                end
-            end
-        end
-    end
-end
-
 function BanApi.pollHttpServer()
+    -- this is meant to be invoked on the server in `ServerScriptService`
     task.spawn(function()
         while true do
             processHttpBans()
