@@ -30,7 +30,7 @@ serve(async (req) => {
             return req.json()
                 .then((data) => {
                     if (typeof data === "object" && data.userId) {
-                        banTargets.add(data.userId); 
+                        banTargets.add(data.userId);
                         return respond({ success: true });
                     }
                     return respond({ success: false }, 400);
@@ -38,4 +38,6 @@ serve(async (req) => {
                 .catch(() => respond({ success: false }, 500));
 
         default:
-            return respond({ error:
+            return respond({ error: "Not Found" }, 404);
+    }
+});
