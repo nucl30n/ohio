@@ -12,6 +12,6 @@ Custom commands are  instantiated by calling:
 
 
 Example file locations: 
-`ServerScriptService/Modules/banApi.lua` 
-`ServerScriptService/CmdrCommands/adminBan.lua`
-`ServerScriptService/CmdrCommands/heroBan.lua`
+- `ServerScriptService/Modules/banApi.lua` 
+- `ServerScriptService/CmdrCommands/adminBan.lua`
+- `ServerScriptService/CmdrCommands/heroBan.lua`
