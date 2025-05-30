@@ -7,7 +7,7 @@ It features predefined ban durations corresponding to the current Ohio shadowban
 There's support for two Cmdr roles -- Admin and Hero -- with different ban perms corresponding to the staff polciy.
 
 Custom commands are  instantiated by calling: 
-> return require(game.ServerScriptService.Modules.banApi)("`Hero` or `Admin` ")
+> return require(game.ServerScriptService.Modules.banApi)("`Hero` or `Admin`")
 
 
 
