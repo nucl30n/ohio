@@ -1,2 +1,2 @@
 -- ServerScriptService/CmdrCommands/heroBan.lua
-return require(game.ServerScriptService.Modules.banApi)("Hero")
+return require(game.ServerScriptService.Modules.banApi).getCmdrDef("Hero")
