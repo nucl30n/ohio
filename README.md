@@ -4,7 +4,7 @@ Ban API module to define custom Cmdr commands and execute bans via an HTTP serve
 Intended to be added to `ServerScriptService/Modules/`.
 
 ### Cmdr Commands
-Custom commands are defined by calling `banApigetCmdrDef(role)`:
+Custom commands are defined by calling `banApi.getCmdrDef(role)`:
 ```lua
 return require(game.ServerScriptService.Modules.banApi).getCmdrDef( "`Hero` or `Admin`" )
 ```
