@@ -1,5 +1,3 @@
-# Components
-
 ### banApi.lua
 Ban API module to define custom Cmdr commands and execute bans via an HTTP server (for use with a discord bot or web UI).
 
