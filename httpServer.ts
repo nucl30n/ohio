@@ -13,7 +13,6 @@ serve(async (req) => {
     const url = new URL(req.url, "http://x");
     switch (true) {
         case (req.method === "GET" && url.pathname === "/ohio/getban"):
-            // Only userIds in the response (no roles)
             return respond({ targets: Array.from(banTargets) });
 
         case (req.method === "POST" && url.pathname === "/ohio/confirmban"):
