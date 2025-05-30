@@ -164,7 +164,7 @@ local function processHttpBans()
 end
 
 function BanApi.getCmdrDef(group)
-    -- this is meant to be invoked in `ServerScriptService/CmdrCommands/`
+    -- this is meant to be invoked in `ServerScriptService/CmdrCommands/` in dedicated one-liner files for each group
     if not Groups.Defs[group] then
         error("Invalid group: " .. tostring(group))
     else
