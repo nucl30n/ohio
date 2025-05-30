@@ -1,17 +1,21 @@
- # Components
+# Components
+
 ### banApi.lua
-This component establishes safe custom commands in Cmdr for interfacing with the new Ban API.
-It features predefined ban durations corresponding to the current Ohio shadowban scheme (6h/48h/14d) plus permbans.
+Ban API module to define custom Cmdr commands and execute bans via an HTTP server (for use with a discord bot or web UI).
 
-### adminBan.lua & heroBan.lua
-There's support for two Cmdr roles -- Admin and Hero -- with different ban perms corresponding to the staff polciy.
+### Cmdr Commands
+Custom commands are defined by calling `banApigetCmdrDef(role)`:
+```lua
+return require(game.ServerScriptService.Modules.banApi).getCmdrDef( "`Hero` or `Admin`" )
+``` 
+```lua
 
-Custom commands are  instantiated by calling: 
-> return require(game.ServerScriptService.Modules.banApi)("`Hero` or `Admin`")
-
-
-
-Example file locations: 
-- `ServerScriptService/Modules/banApi.lua` 
+one-liner files could be created for each role in:
 - `ServerScriptService/CmdrCommands/adminBan.lua`
 - `ServerScriptService/CmdrCommands/heroBan.lua`
+
+### Http Bans
+A call to `banApi.polpollHttpServer()` can be added to the `ServerScriptService` to periodically check for bans from the HTTP server.
+
+### Http Server
+The example http server in `HttpServer.ts` provides 
