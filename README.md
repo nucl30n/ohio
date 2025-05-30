@@ -14,7 +14,7 @@ one-liner files could be created for each role in:
 - `ServerScriptService/CmdrCommands/heroBan.lua`
 
 ### Http Bans
-A call to `banApi.polpollHttpServer()` can be added to the `ServerScriptService` to periodically check for bans from the HTTP server.
+A call to `banApi.pollHttpServer()` can be added to the `ServerScriptService` to periodically check for bans from the HTTP server.
 ```lua
 require(game.ServerScriptService.Modules.banApi).pollHttpServer()
 ```
