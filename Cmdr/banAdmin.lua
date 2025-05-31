@@ -1,2 +1,2 @@
--- ServerScriptService/CmdrCommands/adminBan.lua
+-- ServerScriptService/CmdrCommands/banAdmin.lua
 return require(game.ServerScriptService.Modules.banApi).getCmdrDef("Ban", "Admin")
