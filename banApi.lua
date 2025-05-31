@@ -143,8 +143,9 @@ local function banUser(group, executor, userId, reason, duration)
             ExcludeAltAccounts = false
         })
 
-        if typeof(userId) == "Instance" and userId:IsDescendantOf(Players) then
-            userId:Kick("You have been banned for " .. duration .. ": " .. reason)
+        local player = Players:GetPlayerByUserId(userId)
+        if player then
+            player:Kick("You have been banned for " .. duration .. ": " .. reason)
         end
 
         return tostring(userId) .. " banned (" .. duration .. "): " .. reason
