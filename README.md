@@ -14,7 +14,7 @@ one-liner files for each role in:
 - `ServerScriptService/CmdrCommands/banHero.lua`
 
 ### Http Bans
-Http-based bans can be accomplished by having game servers polling an http server (something like `https://devv.games/ohio/api`) at a regular interval and running the bans that are returned.
+Http-based bans can be accomplished by having game servers polling an http server (e.g. `https://devv.games/ohio/api`) at a regular interval and running the bans that are returned.
 This allows for bans to be managed through a Discord bot or a web UI.
 
 A call to `banApi.pollHttpServer()` can be added to the `ServerScriptService`  to perform this polling.
