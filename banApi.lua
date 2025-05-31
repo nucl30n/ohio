@@ -222,13 +222,13 @@ local function getBanSummary(userId)
     local ok, result = fetchBanHistory(userId)
     if not ok then return "Failed to retrieve ban history: " .. tostring(result) end
 
-    local totalTime, count, perm = 0, 0, false
-    local reasonsTbl = {}
+    local totalTime, count, perm, allReasons = 0, 0, false, {}
+
     for _, entry in ipairs(result) do
         if entry.Ban then
             count = count + 1
             if entry.Reason and entry.Reason ~= "" then
-                table.insert(reasonsTbl, entry.Reason)
+                table.insert(allReasons, entry.Reason)
             end
             totalTime = totalTime + entry.Duration
 
@@ -237,7 +237,8 @@ local function getBanSummary(userId)
             end
         end
     end
-    local reasons = table.concat(reasonsTbl, ", ")
+
+    local reasons = table.concat(allReasons, ", ")
 
     if perm then
         return "perm banned with reasons: " .. reasons
