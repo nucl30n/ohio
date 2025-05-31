@@ -7,12 +7,8 @@ local Players = game:GetService("Players")
 
 local Groups = {
     Defs = {
-        Hero = {
-            httpKey = "4b3c5f8d-2e1a-4c0b-9f6d-7e8c9d0e1f2a",
-        },
-        Admin = {
-            httpKey = "1a2b3c4d-5e6f-7a8b-9c0d-e1f2a3b4c5d6",
-        }
+        Hero = { httpKey = "4b3c5f8d-2e1a-4c0b-9f6d-7e8c9d0e1f2a" },
+        Admin = { httpKey = "1a2b3c4d-5e6f-7a8b-9c0d-e1f2a3b4c5d6" },
     },
     Validate = function() end
 }
@@ -35,38 +31,14 @@ local BanApi = {}
 
 local BanDefs = (function(hour, day)
     return {
-        ["6h"] = {
-            seconds = 6 * hour,
-            executors = { "Hero", "Admin" }
-        },
-        ["2d"] = {
-            seconds = 2 * day,
-            executors = { "Hero", "Admin" }
-        },
-        ["7d"] = {
-            seconds = 7 * day,
-            executors = { "Hero", "Admin" }
-        },
-        ["2w"] = {
-            seconds = 14 * day,
-            executors = { "Hero", "Admin" }
-        },
-        ["3m"] = {
-            seconds = 90 * day,
-            executors = { "Admin" }
-        },
-        ["6m"] = {
-            seconds = 180 * day,
-            executors = { "Admin" }
-        },
-        ["perm"] = {
-            seconds = -1,
-            executors = { "Admin" }
-        },
-        ["auto"] = {
-            seconds = 0,
-            executors = { "Hero", "Admin" }
-        }
+        ["6h"] = { seconds = hour * 6, executors = { "Hero", "Admin" } },
+        ["2d"] = { seconds = day * 2, executors = { "Hero", "Admin" } },
+        ["7d"] = { seconds = day * 7, executors = { "Hero", "Admin" } },
+        ["2w"] = { seconds = day * 14, executors = { "Hero", "Admin" } },
+        ["3m"] = { seconds = day * 90, executors = { "Admin" } },
+        ["6m"] = { seconds = day * 180, executors = { "Admin" } },
+        ["perm"] = { seconds = -1, executors = { "Admin" } },
+        ["auto"] = { seconds = 0, executors = { "Hero", "Admin" } }
     }
 end)(3600, 24 * 3600)
 
@@ -86,7 +58,7 @@ end
 
 local function getSortedBanDurations(group)
     local arr = {}
-    for k, def in pairs(BanDefs) do
+    for _, def in pairs(BanDefs) do
         if def.seconds > 0 and table.find(def.executors, group) then
             table.insert(arr, def.seconds)
         end
@@ -95,13 +67,50 @@ local function getSortedBanDurations(group)
     return arr
 end
 
-local function calculateAutoBan(userId, group)
+local function getUserId(target)
+    if typeof(target) == "Instance" and target.UserId then
+        return target.UserId
+    elseif typeof(target) == "number" then
+        return target
+    elseif typeof(target) == "string" then
+        return tonumber(target)
+    elseif typeof(target) == "Player" and target.UserId then
+        return target.UserId
+    else
+        return 0
+    end
+end
+
+local function fetchBanHistory(userId)
     local ok, pages = pcall(function()
         return Players:GetBanHistoryAsync(userId)
     end)
+    if not ok or not pages then return ok, {} end
+
+    local history = {}
+    local function readPage(page)
+        for _, entry in ipairs(page) do
+            table.insert(history, entry)
+        end
+    end
+
+    readPage(pages:GetCurrentPage())
+    while not pages.IsFinished do
+        local ok2 = pcall(function()
+            pages:AdvanceToNextPageAsync()
+        end)
+        if not ok2 then break end
+        readPage(pages:GetCurrentPage())
+    end
+
+    return true, history
+end
+
+local function calculateAutoBan(userId, group)
+    local ok, history = fetchBanHistory(userId)
     local total = 0
-    if ok and pages then
-        for _, entry in ipairs(pages:GetCurrentPage()) do
+    if ok and history then
+        for _, entry in ipairs(history) do
             if entry.Ban and entry.Duration > 0 then
                 total = total + entry.Duration
             end
@@ -118,18 +127,23 @@ local function calculateAutoBan(userId, group)
     return last
 end
 
-local function banUser(group, executor, userId, reason, duration)
+local function banUser(group, executor, target, reason, duration)
+    if not duration or duration == "" then duration = "auto" end
     duration = duration:lower()
-    local banSeconds = 0
 
+    local userId = getUserId(target)
+    if not userId then
+        return false, "Invalid target: could not determine userId"
+    end
+    local def = BanDefs[duration]
     if not Players.BanAsync then
         return false, "Ban API not available"
-    elseif not BanDefs[duration] then
+    elseif not def then
         return false, "Invalid duration: " .. durationStr(group)
-    elseif not table.find(BanDefs[duration].executors, group) then
+    elseif not table.find(def.executors, group) then
         return false, "Unauthorized"
     else
-        banSeconds = BanDefs[duration].seconds
+        local banSeconds = def.seconds
         if banSeconds == 0 then
             banSeconds = calculateAutoBan(userId, group)
         end
@@ -148,7 +162,7 @@ local function banUser(group, executor, userId, reason, duration)
             player:Kick("You have been banned for " .. duration .. ": " .. reason)
         end
 
-        return tostring(userId) .. " banned (" .. duration .. "): " .. reason
+        return true, tostring(userId) .. " banned (" .. duration .. "): " .. reason
     end
 end
 
@@ -166,11 +180,10 @@ local function confirmHttpBan(userId)
 end
 
 local function executeHttpBan(group, ban)
-    local player = Players:GetPlayerByUserId(ban.userId)
     banUser(
         group,
         "HttpServer",
-        player or ban.userId,
+        ban.userId,
         ban.reason or "",
         (ban.duration or ""):lower()
     )
@@ -182,7 +195,7 @@ local function processHttpBans()
         for _, ban in ipairs(result.bans) do
             local group = Groups.Validate(ban.httpKey)
             if group and ban.userId and ban.duration then
-                local ok, err = pcall(function()
+                local ok = pcall(function()
                     executeHttpBan(group, ban)
                 end)
                 if ok then
@@ -195,13 +208,6 @@ local function processHttpBans()
     end
 end
 
-local function fetchBanHistory(userId)
-    local ok, result = pcall(function()
-        return Players:GetBanHistoryAsync(userId)
-    end)
-    return ok, result
-end
-
 local function getReadableTime(seconds)
     if seconds < 86400 then
         return string.format("%.1fhr", seconds / 3600)
@@ -212,16 +218,18 @@ local function getReadableTime(seconds)
     end
 end
 
-
 local function getBanSummary(userId)
     local ok, result = fetchBanHistory(userId)
     if not ok then return "Failed to retrieve ban history: " .. tostring(result) end
 
-    local totalTime, count, reasons, perm = 0, 0, "", false
+    local totalTime, count, perm = 0, 0, false
+    local reasonsTbl = {}
     for _, entry in ipairs(result) do
         if entry.Ban then
             count = count + 1
-            reasons = reasons .. entry.Reason
+            if entry.Reason and entry.Reason ~= "" then
+                table.insert(reasonsTbl, entry.Reason)
+            end
             totalTime = totalTime + entry.Duration
 
             if entry.Duration == -1 then
@@ -229,6 +237,7 @@ local function getBanSummary(userId)
             end
         end
     end
+    local reasons = table.concat(reasonsTbl, ", ")
 
     if perm then
         return "perm banned with reasons: " .. reasons
@@ -246,9 +255,8 @@ local getSafeOutput = function(context, message)
         if executor and executor:IsA("Player") then
             return message:sub(1, 1000)
         end
-    else
-        return message
     end
+    return message
 end
 
 local function banCmdDef(group)
@@ -263,7 +271,7 @@ local function banCmdDef(group)
             { Type = "string", Name = "duration", Description = durationStr(group) }
         },
         Run = function(context, target, reason, duration)
-            local ok, msg = banUser(group, context.Executor.Name, target.UserId, reason, duration)
+            local ok, msg = banUser(group, context.Executor.Name, target, reason, duration)
             return getSafeOutput(context, msg)
         end
     }
@@ -279,15 +287,13 @@ local function historyCmdDef(group)
             { Type = "player", Name = "target", Description = "Player to get history for" }
         },
         Run = function(context, target)
-            local userId = target.UserId
-
+            local userId = getUserId(target)
             return getSafeOutput(context, getBanSummary(userId))
         end
     }
 end
 
 function BanApi.getCmdrDef(command, group)
-    -- this is meant to be invoked in `ServerScriptService/CmdrCommands/` in dedicated one-liner files for each group
     if not Groups.Defs[group] then
         error("Invalid group: " .. tostring(group))
     elseif command == "ban" then
@@ -300,7 +306,6 @@ function BanApi.getCmdrDef(command, group)
 end
 
 function BanApi.pollHttpServer()
-    -- this is meant to be invoked on the server in `ServerScriptService`
     task.spawn(function()
         while true do
             processHttpBans()
