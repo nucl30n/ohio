@@ -120,15 +120,16 @@ end
 
 local function banUser(group, executor, userId, reason, duration)
     duration = duration:lower()
-    local def = BanDefs[duration]
+    local banSeconds = 0
+
     if not Players.BanAsync then
         return false, "Ban API not available"
-    elseif not def then
+    elseif not BanDefs[duration] then
         return false, "Invalid duration: " .. durationStr(group)
-    elseif not table.find(def.executors, group) then
+    elseif not table.find(BanDefs[duration].executors, group) then
         return false, "Unauthorized"
     else
-        local banSeconds = def.seconds
+        banSeconds = BanDefs[duration].seconds
         if banSeconds == 0 then
             banSeconds = calculateAutoBan(userId, group)
         end
@@ -146,8 +147,7 @@ local function banUser(group, executor, userId, reason, duration)
             userId:Kick("You have been banned for " .. duration .. ": " .. reason)
         end
 
-        return true, (typeof(userId) == "Instance" and userId.Name or tostring(userId))
-            .. " banned (" .. duration .. "): " .. reason
+        return tostring(userId) .. " banned (" .. duration .. "): " .. reason
     end
 end
 
