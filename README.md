@@ -6,7 +6,7 @@ Intended to be added to `ServerScriptService/Modules/`.
 ### Cmdr Commands
 Custom commands are defined by calling `banApi.getCmdrDef(role)`:
 ```lua
-return require(game.ServerScriptService.Modules.banApi).getCmdrDef(group: "Hero" or "Admin", command: "ban" or "unban" or "history")
+return require(game.ServerScriptService.Modules.banApi).getCmdrDef(group: "Hero", command: "ban")
 ```
 
 one-liner files for each role in:
