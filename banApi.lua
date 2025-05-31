@@ -194,7 +194,7 @@ local function processHttpBans()
     end
 end
 
-function BanApi.fetchBanHistory(userId)
+local function fetchBanHistory(userId)
     local ok, result = pcall(function()
         return Players:GetBanHistoryAsync(userId)
     end)
@@ -213,7 +213,7 @@ end
 
 
 local function getBanSummary(userId)
-    local ok, result = BanApi.fetchBanHistory(userId)
+    local ok, result = fetchBanHistory(userId)
     if not ok then return "Failed to retrieve ban history: " .. tostring(result) end
 
     local totalTime, count, reasons, perm = 0, 0, "", false
