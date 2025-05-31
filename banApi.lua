@@ -82,9 +82,7 @@ local function getUserId(target)
 end
 
 local function fetchBanHistory(userId)
-    local ok, pages = pcall(function()
-        return Players:GetBanHistoryAsync(userId)
-    end)
+    local ok, pages = pcall(Players.GetBanHistoryAsync, Players, userId)
     if not ok or not pages then return ok, {} end
 
     local history = {}
@@ -96,10 +94,7 @@ local function fetchBanHistory(userId)
 
     readPage(pages:GetCurrentPage())
     while not pages.IsFinished do
-        local ok2 = pcall(function()
-            pages:AdvanceToNextPageAsync()
-        end)
-        if not ok2 then break end
+        if not pcall(pages.AdvanceToNextPageAsync, pages) then break end
         readPage(pages:GetCurrentPage())
     end
 
@@ -194,15 +189,8 @@ local function processHttpBans()
     if success and type(result.bans) == "table" then
         for _, ban in ipairs(result.bans) do
             local group = Groups.Validate(ban.httpKey)
-            if group and ban.userId and ban.duration then
-                local ok = pcall(function()
-                    executeHttpBan(group, ban)
-                end)
-                if ok then
-                    pcall(function()
-                        confirmHttpBan(ban.userId)
-                    end)
-                end
+            if group and ban.userId and ban.duration and pcall(executeHttpBan, group, ban) then
+                pcall(confirmHttpBan, ban.userId)
             end
         end
     end
