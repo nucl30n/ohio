@@ -77,7 +77,7 @@ local function getUserId(target)
     elseif typeof(target) == "Player" and target.UserId then
         return target.UserId
     else
-        return 0
+        return nil
     end
 end
 
